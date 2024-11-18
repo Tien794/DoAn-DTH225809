@@ -61,10 +61,12 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.speed_y = -7
+        self.angle = random.uniform(-0.05, 0.05)  # Một chút lệch hướng
 
     def update(self):
-        # Di chuyển tên lửa lên trên
+        # Di chuyển tên lửa lên trên, đồng thời thay đổi vị trí theo chiều ngang một chút
         self.rect.y += self.speed_y
+        self.rect.x += int(self.angle * 10)  # Chuyển động lệch theo chiều ngang
         # Xóa tên lửa khi ra ngoài màn hình
         if self.rect.bottom < 0:
             self.kill()
@@ -88,6 +90,24 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.x = random.randrange(SCREEN_WIDTH - 50)
             self.rect.y = random.randrange(-100, -40)
             self.speed_y = random.randrange(1, 5)
+
+# Lớp hiệu ứng nổ (Explosion)
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((50, 50), pygame.SRCALPHA)  # Tạo nền trong suốt
+        pygame.draw.circle(self.image, (255, 255, 0), (25, 25), 25)  # Tạo hình tròn màu vàng (nổ)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.frame = 0
+        self.max_frames = 5  # Số khung hình của hiệu ứng nổ
+
+    def update(self):
+        self.frame += 1
+        if self.frame >= self.max_frames:
+            self.kill()  # Sau khi hoàn thành, xóa hiệu ứng nổ
+        else:
+            self.image.set_alpha(255 - self.frame * 50)  # Dần mờ đi
 
 # Hàm tạo kẻ địch ban đầu
 def create_initial_enemies(all_sprites, enemies, num_enemies=5):
@@ -158,7 +178,10 @@ def main():
                     for enemy in enemies_hit:
                         bullet.kill()  # Xóa tên lửa
                         score += 10  # Tăng điểm khi bắn trúng kẻ địch
-                        # Tạo thêm một kẻ địch mới khi bắn hạ
+                        # Tạo hiệu ứng nổ
+                        explosion = Explosion(enemy.rect.centerx, enemy.rect.centery)
+                        all_sprites.add(explosion)
+                        # Tạo thêm một kẻ địch mới
                         new_enemy = Enemy()
                         all_sprites.add(new_enemy)
                         enemies.add(new_enemy)
