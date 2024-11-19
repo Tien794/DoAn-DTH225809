@@ -131,8 +131,50 @@ def draw_game_over(score):
     screen.blit(game_over_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 3))
     screen.blit(score_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2))
 
+# Hàm vẽ menu chính với nút Start
+def draw_main_menu():
+    font = pygame.font.Font(None, 120)
+    title_text = font.render("Space Shooter", True, RED)
+    screen.blit(title_text, (SCREEN_WIDTH // 6, SCREEN_HEIGHT // 4 - 48))
+
+    # Tạo nút Start
+    start_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2, 280, 80)
+    pygame.draw.rect(screen, BLUE, start_button)
+    start_text = pygame.font.Font(None, 70).render("START", True, WHITE)
+    screen.blit(start_text, (SCREEN_WIDTH // 3 + 60, SCREEN_HEIGHT // 1.95 + 10))
+    
+    return start_button
+
+# Hàm xử lý menu
+def main_menu():
+    menu_running = True
+    
+    while menu_running:
+        screen.fill(BLACK)
+        start_button = draw_main_menu()
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                menu_running = False
+                return "Quit"
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return "Start Game"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Nếu nhấn chuột trái
+                    if start_button.collidepoint(event.pos):  # Nếu nhấn vào nút Start
+                        return "Start Game"
+
 # Hàm chính của game
 def main():
+    # Hiển thị màn hình chính trước khi bắt đầu
+    menu_result = main_menu()
+    
+    if menu_result == "Quit":
+        pygame.quit()
+        return
+
     # Khởi tạo đối tượng player, enemies, bullets
     player = Player()
     all_sprites = pygame.sprite.Group()
@@ -149,7 +191,6 @@ def main():
     game_over = False  # Biến kiểm tra trạng thái game over
 
     while running:
-        # Kiểm tra các sự kiện
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -189,7 +230,6 @@ def main():
             # Kiểm tra nếu có kẻ địch nào ra ngoài màn hình và tạo lại
             for enemy in enemies:
                 if enemy.rect.top > SCREEN_HEIGHT:
-                    # Xóa kẻ địch cũ và tạo một kẻ địch mới
                     enemy.kill()
                     new_enemy = Enemy()
                     all_sprites.add(new_enemy)
@@ -210,13 +250,9 @@ def main():
             # Nếu game kết thúc, hiển thị thông báo "Game Over"
             draw_game_over(score)
 
-        # Cập nhật màn hình
         pygame.display.flip()
-
-        # Điều chỉnh tốc độ khung hình
         clock.tick(FPS)
 
-    # Thoát game
     pygame.quit()
 
 # Chạy game
