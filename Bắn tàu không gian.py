@@ -34,6 +34,7 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # Lớp tàu không gian (Player)
+# Lớp tàu không gian (Player)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -41,15 +42,23 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Căn giữa tàu
         self.speed_x = 0
+        self.speed_y = 0  # Thêm tốc độ di chuyển theo chiều dọc
 
     def update(self):
-        # Di chuyển tàu
+        # Di chuyển tàu theo cả chiều ngang và chiều dọc
         self.rect.x += self.speed_x
-        # Giới hạn di chuyển tàu không ra ngoài màn hình
+        self.rect.y += self.speed_y
+
+        # Không giới hạn di chuyển tàu ra ngoài màn hình nữa
+        # Giới hạn di chuyển của tàu nếu cần
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
 
     def move_left(self):
         self.speed_x = -5
@@ -57,8 +66,15 @@ class Player(pygame.sprite.Sprite):
     def move_right(self):
         self.speed_x = 5
 
+    def move_up(self):
+        self.speed_y = -5
+
+    def move_down(self):
+        self.speed_y = 5
+
     def stop(self):
         self.speed_x = 0
+        self.speed_y = 0  # Dừng tàu khi thả phím
 
 # Lớp tên lửa (Bullet)
 class Bullet(pygame.sprite.Sprite):
@@ -149,20 +165,20 @@ def draw_game_over(score):
     game_over_text = font.render("GAME OVER", True, RED)
     score_text = font.render(f"Final Score: {score}", True, WHITE)
     
-    screen.blit(game_over_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 3))
-    screen.blit(score_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2))
+    screen.blit(game_over_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 4.5))
+    screen.blit(score_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 3))
 
     # Vẽ nút chơi lại
-    restart_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 1.5, 280, 80)
+    restart_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2, 280, 80)
     pygame.draw.rect(screen, GREEN, restart_button)
-    restart_text = pygame.font.Font(None, 50).render("PLAY AGAIN", True, WHITE)
-    screen.blit(restart_text, (SCREEN_WIDTH // 3 + 40, SCREEN_HEIGHT // 1.5 + 20))
+    restart_text = pygame.font.Font(None, 55).render("PLAY AGAIN", True, WHITE)
+    screen.blit(restart_text, (SCREEN_WIDTH // 3 + 40, SCREEN_HEIGHT // 2 + 20))
 
     # Vẽ nút thoát
-    quit_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 1.25, 280, 80)
+    quit_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 1.5, 280, 80)
     pygame.draw.rect(screen, RED, quit_button)
-    quit_text = pygame.font.Font(None, 50).render("THOÁT", True, WHITE)
-    screen.blit(quit_text, (SCREEN_WIDTH // 3 + 100, SCREEN_HEIGHT // 1.25 + 20))
+    quit_text = pygame.font.Font(None, 60).render("THOÁT", True, WHITE)
+    screen.blit(quit_text, (SCREEN_WIDTH // 3.25 + 100, SCREEN_HEIGHT // 1.5 + 20))
     
     return restart_button, quit_button
 
@@ -206,7 +222,6 @@ def main_menu():
                 elif quit_button.collidepoint(mouse_pos):
                     menu_running = False
                     return 'quit'
-
 # Hàm xử lý game
 def game_loop():
     all_sprites = pygame.sprite.Group()
@@ -220,7 +235,7 @@ def game_loop():
     create_initial_enemies(all_sprites, enemies)
     
     last_spawn_time = pygame.time.get_ticks()  # Lưu thời gian spawn lần đầu
-    max_enemies = 7 # Giới hạn số lượng kẻ địch trên màn hình
+    max_enemies = 10  # Giới hạn số lượng kẻ địch trên màn hình
     game_running = True
     while game_running:
         for event in pygame.event.get():
@@ -231,12 +246,18 @@ def game_loop():
                     player.move_left()
                 if event.key == pygame.K_RIGHT:
                     player.move_right()
-                if event.key == pygame.K_RETURN:
+                if event.key == pygame.K_UP:
+                    player.move_up()
+                if event.key == pygame.K_DOWN:
+                    player.move_down()
+                if event.key == pygame.K_RETURN:  # Bắn tên lửa
                     bullet = Bullet(player.rect.centerx, player.rect.top)
                     all_sprites.add(bullet)
                     bullets.add(bullet)
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    player.stop()
+                if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     player.stop()
         
         all_sprites.update()
