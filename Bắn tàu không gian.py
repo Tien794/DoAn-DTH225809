@@ -1,5 +1,6 @@
 import pygame
-import random
+import os
+import random  # Đảm bảo rằng random được import
 
 # Khởi tạo pygame
 pygame.init()
@@ -19,26 +20,36 @@ SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 
+# Đường dẫn thư mục hiện tại của trò chơi
+current_directory = os.path.dirname(__file__)
+
+# Hàm tải hình ảnh
+def load_image(image_name):
+    try:
+         return pygame.image.load(os.path.join('assets', image_name))  
+    except pygame.error:
+        print(f"Không thể tải tệp hình ảnh {image_name}")
+        raise SystemExit
+
 # Tải hình ảnh
-player_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/tauchien.png')
+player_image = load_image('tauchien.png')
 player_image = pygame.transform.scale(player_image, (50, 50))  # Thay đổi kích thước tàu
 
-enemy_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/maybay.png')
-enemy_image = pygame.transform.scale(enemy_image, (50, 50))  # Thay đổi kích thước kẻ địch về 50x50
+enemy_image = load_image('maybay.png')
+enemy_image = pygame.transform.scale(enemy_image, (50, 50))  # Thay đổi kích thước kẻ địch
 
-bullet_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/bullet.png')
-bullet_image = pygame.transform.scale(bullet_image, (15, 30))  # Thay đổi kích thước của tên lửa về 15x30
+bullet_image = load_image('bullet.png')
+bullet_image = pygame.transform.scale(bullet_image, (15, 30))  # Thay đổi kích thước của tên lửa
 
 # Tốc độ khung hình
 FPS = 60
 clock = pygame.time.Clock()
 
 # Lớp tàu không gian (Player)
-# Lớp tàu không gian (Player)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = player_image  # Sử dụng hình ảnh tàu người chơi
+        self.image = player_image
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Căn giữa tàu
         self.speed_x = 0
@@ -49,7 +60,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
 
-        # Không giới hạn di chuyển tàu ra ngoài màn hình nữa
         # Giới hạn di chuyển của tàu nếu cần
         if self.rect.left < 0:
             self.rect.left = 0
@@ -128,6 +138,7 @@ def spawn_enemy(all_sprites, enemies, last_spawn_time, spawn_interval=2000):
         enemies.add(enemy)
         last_spawn_time = current_time  # Cập nhật thời gian spawn mới
     return last_spawn_time
+
 # Lớp hiệu ứng nổ (Explosion)
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -145,13 +156,6 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()  # Sau khi hoàn thành, xóa hiệu ứng nổ
         else:
             self.image.set_alpha(255 - self.frame * 50)  # Dần mờ đi
-
-# Hàm tạo kẻ địch ban đầu
-def create_initial_enemies(all_sprites, enemies, num_enemies=5):
-    for _ in range(num_enemies):
-        enemy = Enemy()
-        all_sprites.add(enemy)
-        enemies.add(enemy)
 
 # Hàm vẽ điểm số lên màn hình
 def draw_score(score):
@@ -222,6 +226,7 @@ def main_menu():
                 elif quit_button.collidepoint(mouse_pos):
                     menu_running = False
                     return 'quit'
+
 # Hàm xử lý game
 def game_loop():
     all_sprites = pygame.sprite.Group()
