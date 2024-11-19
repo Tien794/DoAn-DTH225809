@@ -19,6 +19,16 @@ SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 
+# Tải hình ảnh
+player_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/tauchien.png')  # Hình ảnh cho tàu người chơi
+player_image = pygame.transform.scale(player_image, (50, 50))  # Thay đổi kích thước tàu
+
+enemy_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/maybay.png')  # Hình ảnh cho kẻ địch
+enemy_image = pygame.transform.scale(enemy_image, (50, 50))  # Thay đổi kích thước kẻ địch về 50x50
+
+bullet_image = pygame.image.load('c:/Users/User/Pictures/Saved Pictures/bullet.png')  # Hình ảnh cho tên lửa
+bullet_image = pygame.transform.scale(bullet_image, (15, 30))  # Thay đổi kích thước của tên lửa về 15x30
+
 # Tốc độ khung hình
 FPS = 60
 clock = pygame.time.Clock()
@@ -27,10 +37,9 @@ clock = pygame.time.Clock()
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(GREEN)
+        self.image = player_image  # Sử dụng hình ảnh tàu người chơi
         self.rect = self.image.get_rect()
-        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)
+        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Căn giữa tàu
         self.speed_x = 0
 
     def update(self):
@@ -56,8 +65,7 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((5, 10))
-        self.image.fill(RED)
+        self.image = bullet_image  # Sử dụng hình ảnh tên lửa
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.speed_y = -7
@@ -75,8 +83,7 @@ class Bullet(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(RED)
+        self.image = enemy_image  # Sử dụng hình ảnh kẻ địch
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(SCREEN_WIDTH - 50)
         self.rect.y = random.randrange(-100, -40)
@@ -122,7 +129,7 @@ def draw_score(score):
     score_text = font.render(f"Score: {score}", True, WHITE)
     screen.blit(score_text, (10, 10))  # Hiển thị điểm ở góc trên bên trái
 
-# Hàm vẽ thông báo "Game Over"
+# Hàm vẽ thông báo "Game Over" và nút "Chơi lại"
 def draw_game_over(score):
     font = pygame.font.Font(None, 72)
     game_over_text = font.render("GAME OVER", True, RED)
@@ -131,7 +138,15 @@ def draw_game_over(score):
     screen.blit(game_over_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 3))
     screen.blit(score_text, (SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2))
 
-# Hàm vẽ menu chính với nút Start
+    # Vẽ nút chơi lại
+    restart_button = pygame.Rect(SCREEN_WIDTH // 3, SCREEN_HEIGHT // 1.5, 280, 80)
+    pygame.draw.rect(screen, GREEN, restart_button)
+    restart_text = pygame.font.Font(None, 50).render("PLAY AGAIN", True, WHITE)
+    screen.blit(restart_text, (SCREEN_WIDTH // 3 + 40, SCREEN_HEIGHT // 1.5 + 20))
+    
+    return restart_button
+
+# Hàm xử lý menu chính với nút Start
 def draw_main_menu():
     font = pygame.font.Font(None, 120)
     title_text = font.render("Space Shooter", True, RED)
@@ -207,6 +222,14 @@ def main():
             if event.type == pygame.KEYUP and not game_over:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     player.stop()
+
+            if game_over:
+                # Kiểm tra nhấn vào nút "Chơi lại"
+                restart_button = draw_game_over(score)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Nếu nhấn chuột trái
+                        if restart_button.collidepoint(event.pos):
+                            main()  # Gọi lại hàm main để bắt đầu lại game
 
         if not game_over:
             # Cập nhật tất cả sprite
