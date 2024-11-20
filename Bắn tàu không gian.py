@@ -106,34 +106,32 @@ class Bullet(pygame.sprite.Sprite):
 
 # Lớp kẻ địch (Enemy)
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, level):
         super().__init__()
-        self.image = enemy_image  # Sử dụng hình ảnh kẻ địch
+        self.image = enemy_image
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(SCREEN_WIDTH - 50)
         self.rect.y = random.randrange(-100, -40)
-        self.speed_y = random.randrange(1, 5)
+        self.speed_y = random.randrange(1 + level, 5 + level)  # Tốc độ kẻ địch tăng dần theo cấp độ
 
     def update(self):
-        # Di chuyển kẻ địch xuống dưới
         self.rect.y += self.speed_y
-        # Khi kẻ địch rơi khỏi màn hình, xóa kẻ địch
         if self.rect.top > SCREEN_HEIGHT:
             self.kill()
 
 # Hàm tạo kẻ địch ban đầu (Giới hạn số lượng kẻ địch)
-def create_initial_enemies(all_sprites, enemies, num_enemies=5):
+def create_initial_enemies(all_sprites, enemies, level, num_enemies=5):
     for _ in range(num_enemies):
-        enemy = Enemy()
+        enemy = Enemy(level)  # Truyền cấp độ vào khi tạo kẻ địch
         all_sprites.add(enemy)
         enemies.add(enemy)
 
 # Hàm tạo kẻ địch mới sau một khoảng thời gian
-def spawn_enemy(all_sprites, enemies, last_spawn_time, spawn_interval=2000):
+def spawn_enemy(all_sprites, enemies, last_spawn_time, level, spawn_interval=2000):
     current_time = pygame.time.get_ticks()  # Lấy thời gian hiện tại tính bằng ms
     if current_time - last_spawn_time > spawn_interval:
         # Tạo kẻ địch mới nếu đến thời gian spawn
-        enemy = Enemy()
+        enemy = Enemy(level)  # Truyền cấp độ vào khi tạo kẻ địch
         all_sprites.add(enemy)
         enemies.add(enemy)
         last_spawn_time = current_time  # Cập nhật thời gian spawn mới
@@ -237,11 +235,13 @@ def game_loop():
     all_sprites.add(player)
     
     score = 0
-    create_initial_enemies(all_sprites, enemies)
-    
-    last_spawn_time = pygame.time.get_ticks()  # Lưu thời gian spawn lần đầu
-    max_enemies = 10  # Giới hạn số lượng kẻ địch trên màn hình
+    level = 1  # Cấp độ ban đầu
+    create_initial_enemies(all_sprites, enemies, level, num_enemies=5)  # Truyền cấp độ vào khi tạo kẻ địch ban đầu
+
+    last_spawn_time = pygame.time.get_ticks()  # Thời gian spawn kẻ địch
+    max_enemies = 10  # Giới hạn số lượng kẻ địch
     game_running = True
+
     while game_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -255,7 +255,7 @@ def game_loop():
                     player.move_up()
                 if event.key == pygame.K_DOWN:
                     player.move_down()
-                if event.key == pygame.K_RETURN:  # Bắn tên lửa
+                if event.key == pygame.K_SPACE:  # Bắn tên lửa
                     bullet = Bullet(player.rect.centerx, player.rect.top)
                     all_sprites.add(bullet)
                     bullets.add(bullet)
@@ -264,34 +264,43 @@ def game_loop():
                     player.stop()
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     player.stop()
-        
+
         all_sprites.update()
 
         # Kiểm tra va chạm giữa tên lửa và kẻ địch
         for bullet in bullets:
-           enemy_hits = pygame.sprite.spritecollide(bullet, enemies, True)
-           for enemy in enemy_hits:
-               bullet.kill()
-               score += 10
-               explosion = Explosion(enemy.rect.centerx, enemy.rect.centery)
-               all_sprites.add(explosion)
-
-        # Giới hạn số lượng kẻ địch trên màn hình
-        if len(enemies) < max_enemies:
-            last_spawn_time = spawn_enemy(all_sprites, enemies, last_spawn_time, spawn_interval=500)  # 0.5 giây một lần
+            enemy_hits = pygame.sprite.spritecollide(bullet, enemies, True)
+            for enemy in enemy_hits:
+                bullet.kill()
+                score += 10
+                explosion = Explosion(enemy.rect.centerx, enemy.rect.centery)
+                all_sprites.add(explosion)
 
         # Kiểm tra va chạm giữa kẻ địch và tàu
         if pygame.sprite.spritecollide(player, enemies, False):
             game_running = False
 
+        # Cập nhật cấp độ mỗi khi người chơi đạt đến số điểm nhất định
+        if score >= level * 50:  # Mỗi cấp độ sẽ đạt được sau mỗi 50 điểm
+            level += 1
+            print(f"Level up! Current Level: {level}")
+        
+        # Giới hạn số lượng kẻ địch trên màn hình và tăng số lượng kẻ địch theo cấp độ
+        if len(enemies) < max_enemies + level:  # Tăng số lượng kẻ địch mỗi cấp độ
+            last_spawn_time = spawn_enemy(all_sprites, enemies, last_spawn_time, level, spawn_interval=500 - (level * 50))  # Giảm thời gian spawn theo cấp độ
+
         # Vẽ mọi thứ lên màn hình
         screen.fill(BLACK)
         draw_score(score)
+        # Vẽ cấp độ lên màn hình
+        font = pygame.font.Font(None, 36)
+        level_text = font.render(f"Level: {level}", True, WHITE)
+        screen.blit(level_text, (SCREEN_WIDTH - 150, 10))
         all_sprites.draw(screen)
         pygame.display.flip()
 
         clock.tick(FPS)
-    
+
     return score
 
 # Hàm chính
