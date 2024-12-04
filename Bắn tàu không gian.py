@@ -54,7 +54,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Căn giữa tàu
         self.speed_x = 0
         self.speed_y = 0  # Thêm tốc độ di chuyển theo chiều dọc
-        self.health = 3  # Máu ban đầu của người chơi
+        self.health = 5 # Máu ban đầu của người chơi
 
     def update(self):
         # Di chuyển tàu theo cả chiều ngang và chiều dọc
@@ -120,10 +120,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(SCREEN_WIDTH - 50)
         self.rect.y = random.randrange(-100, -40)
-        self.speed_y = random.randrange(1 + level, 5 + level)  # Tốc độ kẻ địch tăng dần theo cấp độ
-        self.speed_x = random.choice([-1, 1]) * random.randint(1, 3)  # Thêm tốc độ di chuyển ngang
+        self.speed_y = random.randrange(1 + level, 2 + level)
+        self.speed_x = random.choice([-2, 1]) * random.randint(1, 1)  # Thêm tốc độ di chuyển ngang
         self.player = player  # Lưu đối tượng người chơi để theo dõi vị trí
-        self.angle = random.uniform(-0.05, 0.05)  # Lệch hướng một chút
+        self.angle = random.uniform(-0.01, 0.01)  # Lệch hướng một chút
 
     def update(self):
         # Di chuyển xuống dưới
@@ -143,14 +143,14 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
 
 # Hàm tạo kẻ địch ban đầu
-def create_initial_enemies(all_sprites, enemies, level, player, num_enemies=5):
+def create_initial_enemies(all_sprites, enemies, level, player, num_enemies=3):
     for _ in range(num_enemies):
         enemy = Enemy(level, player)  # Truyền đối tượng player vào kẻ địch
         all_sprites.add(enemy)
         enemies.add(enemy)
 
 # Hàm tạo kẻ địch mới sau một khoảng thời gian
-def spawn_enemy(all_sprites, enemies, last_spawn_time, level, player, spawn_interval=2000):
+def spawn_enemy(all_sprites, enemies, last_spawn_time, level, player, spawn_interval=1000):
     current_time = pygame.time.get_ticks()  # Lấy thời gian hiện tại tính bằng ms
     if current_time - last_spawn_time > spawn_interval:
         # Tạo kẻ địch mới nếu đến thời gian spawn
@@ -197,7 +197,7 @@ def draw_health_bar(player):
     bar_y = 70
     
     # Màu của thanh máu (đỏ cho mất máu, xanh cho đầy máu)
-    health_percentage = player.health / 3  # Máu tối đa là 3
+    health_percentage = player.health / 5  # Máu tối đa là 5
     pygame.draw.rect(screen, RED, (bar_x, bar_y, bar_width, bar_height))  # Thanh máu đỏ (toàn bộ)
     pygame.draw.rect(screen, GREEN, (bar_x, bar_y, bar_width * health_percentage, bar_height))  # Thanh máu xanh (có máu)
 
@@ -276,10 +276,10 @@ def game_loop():
     
     score = 0
     level = 1  # Cấp độ ban đầu
-    create_initial_enemies(all_sprites, enemies, level, player, num_enemies=5)  # Truyền đối tượng player vào khi tạo kẻ địch ban đầu
+    create_initial_enemies(all_sprites, enemies, level, player, num_enemies=3)  # Truyền đối tượng player vào khi tạo kẻ địch ban đầu
 
     last_spawn_time = pygame.time.get_ticks()  # Thời gian spawn kẻ địch
-    max_enemies = 10  # Giới hạn số lượng kẻ địch
+    max_enemies = 5  # Giới hạn số lượng kẻ địch
     game_running = True
 
     while game_running:
